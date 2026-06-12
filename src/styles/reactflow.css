@@ -1,0 +1,26 @@
+/* Theme React Flow chrome with our shadcn HSL tokens. */
+
+.react-flow__controls,
+.react-flow__minimap {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+.react-flow__controls-button:hover {
+  background: hsl(var(--accent));
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+.react-flow__minimap-mask {
+  fill: hsl(var(--muted) / 0.6);
+}
