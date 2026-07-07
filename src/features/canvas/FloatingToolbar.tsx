@@ -1,7 +1,14 @@
 import {
+  ArrowUpRight,
+  Circle,
+  Eraser,
   Maximize2,
+  Minus,
+  MousePointer2,
+  Pencil,
   Plus,
   Redo2,
+  Square,
   Undo2,
   ZoomIn,
   ZoomOut,
@@ -16,6 +23,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useHistoryAvailability, useStore } from '@/store';
+import type { DrawingTool } from '@/types';
+import { cn } from '@/utils/cn';
 
 interface FloatingToolbarProps {
   onQuickAdd: () => void;
@@ -27,9 +36,10 @@ interface FtbButtonProps {
   icon: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  active?: boolean;
 }
 
-function FtbButton({ label, shortcut, icon, onClick, disabled }: FtbButtonProps) {
+function FtbButton({ label, shortcut, icon, onClick, disabled, active }: FtbButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -39,7 +49,7 @@ function FtbButton({ label, shortcut, icon, onClick, disabled }: FtbButtonProps)
           onClick={onClick}
           disabled={disabled}
           aria-label={label}
-          className="h-8 w-8"
+          className={cn('h-8 w-8', active && 'bg-primary/15 text-primary')}
         >
           {icon}
         </Button>
@@ -55,20 +65,33 @@ function FtbButton({ label, shortcut, icon, onClick, disabled }: FtbButtonProps)
 }
 
 /**
- * Glass toolbar floating at the top-center of the canvas. Reaches the
- * highest-frequency actions (add/zoom/fit/undo/redo) without traveling
- * the cursor up to the TopBar.
+ * Glass toolbar floating at the top-center of the canvas.
+ * Contains: add node, zoom, undo/redo, and drawing tools.
  */
 export function FloatingToolbar({ onQuickAdd }: FloatingToolbarProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const { canUndo, canRedo } = useHistoryAvailability();
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
+  const drawingMode = useStore((s) => s.drawingMode);
+  const setDrawingMode = useStore((s) => s.setDrawingMode);
+
+  const toggleTool = (tool: DrawingTool) => {
+    setDrawingMode(drawingMode === tool ? 'none' : tool);
+  };
 
   return (
     <TooltipProvider delayDuration={150}>
       <div className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2">
         <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border bg-card/85 p-1 shadow-md backdrop-blur animate-slide-in-down">
+          {/* Selection mode (exit drawing) */}
+          <FtbButton
+            label="Select"
+            shortcut="Esc"
+            icon={<MousePointer2 className="h-4 w-4" />}
+            onClick={() => setDrawingMode('none')}
+            active={drawingMode === 'none'}
+          />
           <FtbButton
             label="Add component"
             shortcut="A"
@@ -76,6 +99,53 @@ export function FloatingToolbar({ onQuickAdd }: FloatingToolbarProps) {
             onClick={onQuickAdd}
           />
           <Separator orientation="vertical" className="mx-0.5 h-5" />
+
+          {/* Drawing tools */}
+          <FtbButton
+            label="Pencil"
+            shortcut="P"
+            icon={<Pencil className="h-4 w-4" />}
+            onClick={() => toggleTool('freehand')}
+            active={drawingMode === 'freehand'}
+          />
+          <FtbButton
+            label="Rectangle"
+            shortcut="R"
+            icon={<Square className="h-4 w-4" />}
+            onClick={() => toggleTool('rect')}
+            active={drawingMode === 'rect'}
+          />
+          <FtbButton
+            label="Ellipse"
+            shortcut="O"
+            icon={<Circle className="h-4 w-4" />}
+            onClick={() => toggleTool('ellipse')}
+            active={drawingMode === 'ellipse'}
+          />
+          <FtbButton
+            label="Line"
+            shortcut="L"
+            icon={<Minus className="h-4 w-4" />}
+            onClick={() => toggleTool('line')}
+            active={drawingMode === 'line'}
+          />
+          <FtbButton
+            label="Arrow"
+            shortcut="\"
+            icon={<ArrowUpRight className="h-4 w-4" />}
+            onClick={() => toggleTool('arrow')}
+            active={drawingMode === 'arrow'}
+          />
+          <FtbButton
+            label="Eraser"
+            shortcut="E"
+            icon={<Eraser className="h-4 w-4" />}
+            onClick={() => toggleTool('eraser')}
+            active={drawingMode === 'eraser'}
+          />
+          <Separator orientation="vertical" className="mx-0.5 h-5" />
+
+          {/* Zoom + Fit */}
           <FtbButton
             label="Zoom in"
             icon={<ZoomIn className="h-4 w-4" />}
@@ -92,6 +162,8 @@ export function FloatingToolbar({ onQuickAdd }: FloatingToolbarProps) {
             onClick={() => fitView({ duration: 300, padding: 0.2 })}
           />
           <Separator orientation="vertical" className="mx-0.5 h-5" />
+
+          {/* Undo / Redo */}
           <FtbButton
             label="Undo"
             shortcut="Ctrl+Z"

@@ -1,5 +1,7 @@
 import type { SelectionTarget } from '@/features/canvas/Canvas';
 import type {
+  DrawingElement,
+  DrawingTool,
   ProjectMetadata,
   SystemEdge,
   SystemEdgeData,
@@ -12,6 +14,7 @@ export interface HistorySnapshot {
   nodes: SystemNode[];
   edges: SystemEdge[];
   groups: SystemNodeGroup[];
+  drawings: DrawingElement[];
 }
 
 export interface ClipboardPayload {
@@ -29,6 +32,7 @@ export interface CanvasSlice {
     nodes: SystemNode[];
     edges: SystemEdge[];
     groups?: SystemNodeGroup[];
+    drawings?: DrawingElement[];
     projectName?: string;
   }) => void;
 }
@@ -126,10 +130,25 @@ export interface GroupSlice {
   removeGroup: (groupId: string) => void;
 }
 
+export interface DrawingSlice {
+  drawings: DrawingElement[];
+  drawingMode: DrawingTool;
+  drawingColor: string;
+  drawingStrokeWidth: number;
+  setDrawingMode: (mode: DrawingTool) => void;
+  setDrawingColor: (color: string) => void;
+  setDrawingStrokeWidth: (w: number) => void;
+  addDrawing: (d: DrawingElement) => void;
+  removeDrawing: (id: string) => void;
+  removeDrawings: (ids: string[]) => void;
+  clearAllDrawings: () => void;
+}
+
 export type StoreState = CanvasSlice &
   NodeSlice &
   EdgeSlice &
   SelectionSlice &
   HistorySlice &
   ClipboardSlice &
-  GroupSlice;
+  GroupSlice &
+  DrawingSlice;

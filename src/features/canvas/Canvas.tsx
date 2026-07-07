@@ -35,6 +35,8 @@ import { FloatingToolbar } from '@/features/canvas/FloatingToolbar';
 import { HelpButton } from '@/features/canvas/HelpButton';
 import { StatsPill } from '@/features/canvas/StatsPill';
 import { SelectionOverlay } from '@/features/selection/SelectionOverlay';
+import { DrawingLayer } from '@/features/drawing/DrawingLayer';
+import { DrawingOptionsBar } from '@/features/drawing/DrawingOptionsBar';
 import { computeFocusSet } from '@/features/selection/focusProjection';
 import { expandGroupMoves } from '@/features/groups/groupMovement';
 import { createSystemNode } from '@/features/nodes/nodeFactory';
@@ -132,6 +134,8 @@ function CanvasInner({
   const [menu, setMenu] = useState<MenuState | null>(null);
 
   const focusMode = useStore((s) => s.focusMode);
+  const drawingMode = useStore((s) => s.drawingMode);
+  const isDrawing = drawingMode !== 'none';
 
   exposeRef({
     clientToFlow: (clientX, clientY) => screenToFlowPosition({ x: clientX, y: clientY }),
@@ -178,10 +182,32 @@ function CanvasInner({
   /* ---------------- Node changes ---------------- */
   const handleNodesChange = useCallback(
     (rawChanges: NodeChange[]) => {
-      // Drop `select` changes — selection is owned by our store and
-      // routed through onSelectionChange. Echoing them via setNodes
-      // creates a fresh array reference and re-triggers RF's effects.
+      // Separate select changes — route them to our store, NOT back into
+      // setNodes (which would create new object refs and re-trigger RF).
+      const selectChanges = rawChanges.filter(
+        (c): c is Extract<NodeChange, { type: 'select' }> => c.type === 'select',
+      );
       const filtered = rawChanges.filter((c) => c.type !== 'select');
+
+      // Route select changes → our store's selection (single click path).
+      if (selectChanges.length > 0) {
+        const s = useStore.getState();
+        const currentSet = new Set(s.selectedNodeIds);
+        let changed = false;
+        for (const sc of selectChanges) {
+          if (sc.selected && !currentSet.has(sc.id)) {
+            currentSet.add(sc.id);
+            changed = true;
+          } else if (!sc.selected && currentSet.has(sc.id)) {
+            currentSet.delete(sc.id);
+            changed = true;
+          }
+        }
+        if (changed) {
+          s.setSelectedIds(Array.from(currentSet), s.selectedEdgeIds);
+        }
+      }
+
       if (filtered.length === 0) return;
 
       // Mirror moves across group siblings.
@@ -231,6 +257,28 @@ function CanvasInner({
   /* ---------------- Edge changes ---------------- */
   const handleEdgesChange = useCallback(
     (rawChanges: EdgeChange[]) => {
+      // Route edge select changes to our store.
+      const selectChanges = rawChanges.filter(
+        (c): c is Extract<EdgeChange, { type: 'select' }> => c.type === 'select',
+      );
+      if (selectChanges.length > 0) {
+        const s = useStore.getState();
+        const currentSet = new Set(s.selectedEdgeIds);
+        let changed = false;
+        for (const sc of selectChanges) {
+          if (sc.selected && !currentSet.has(sc.id)) {
+            currentSet.add(sc.id);
+            changed = true;
+          } else if (!sc.selected && currentSet.has(sc.id)) {
+            currentSet.delete(sc.id);
+            changed = true;
+          }
+        }
+        if (changed) {
+          s.setSelectedIds(s.selectedNodeIds, Array.from(currentSet));
+        }
+      }
+
       const changes = rawChanges.filter((c) => c.type !== 'select');
       if (changes.length === 0) return;
 
@@ -418,7 +466,7 @@ function CanvasInner({
         deleteKeyCode={null}
         multiSelectionKeyCode={MULTI_SELECTION_KEYS}
         selectionKeyCode={SELECTION_KEY}
-        panOnDrag
+        panOnDrag={!isDrawing}
         panActivationKeyCode="Space"
         connectionRadius={28}
         connectionMode={ConnectionMode.Loose}
@@ -455,7 +503,10 @@ function CanvasInner({
         <SelectionOverlay />
       </ReactFlow>
 
+      <DrawingLayer />
+
       <FloatingToolbar onQuickAdd={onQuickAdd} />
+      <DrawingOptionsBar />
       <HelpButton onClick={onShowShortcuts} />
       <StatsPill />
 

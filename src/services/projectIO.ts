@@ -1,4 +1,5 @@
 import type {
+  DrawingElement,
   NodeKind,
   ProjectConfig,
   ProjectMetadata,
@@ -235,6 +236,7 @@ export interface SerializeInput {
   nodes: SystemNode[];
   edges: SystemEdge[];
   groups?: SystemNodeGroup[];
+  drawings?: DrawingElement[];
   nowIso?: string;
 }
 
@@ -244,6 +246,7 @@ export function serializeProject(input: SerializeInput): ProjectConfig {
     nodes: input.nodes,
     edges: input.edges,
     groups: input.groups ?? [],
+    drawings: input.drawings ?? [],
     metadata: {
       name: input.projectName,
       description: '',
@@ -307,7 +310,23 @@ export function parseProjectJson(text: string): ProjectConfig {
       : n,
   );
 
-  return { nodes: cleanNodes, edges: cleanEdges, groups: cleanGroups, metadata };
+  // Drawings — optional, backward compat.
+  let drawings: DrawingElement[] = [];
+  if (raw.drawings !== undefined && raw.drawings !== null) {
+    if (!Array.isArray(raw.drawings)) {
+      throw new ProjectIOError('expected array', 'drawings');
+    }
+    drawings = raw.drawings.filter((d): d is DrawingElement =>
+      isObject(d) &&
+      typeof d.id === 'string' &&
+      typeof d.type === 'string' &&
+      Array.isArray(d.points) &&
+      typeof d.stroke === 'string' &&
+      typeof d.strokeWidth === 'number',
+    );
+  }
+
+  return { nodes: cleanNodes, edges: cleanEdges, groups: cleanGroups, drawings, metadata };
 }
 
 export function downloadJson(filename: string, config: ProjectConfig): void {

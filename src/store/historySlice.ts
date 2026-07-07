@@ -5,7 +5,7 @@ import type { HistorySlice, HistorySnapshot, StoreState } from '@/store/types';
 export const HISTORY_LIMIT = 100;
 
 function snapshot(state: StoreState): HistorySnapshot {
-  return { nodes: state.nodes, edges: state.edges, groups: state.groups };
+  return { nodes: state.nodes, edges: state.edges, groups: state.groups, drawings: state.drawings };
 }
 
 export function pushSnapshot(prev: StoreState): Pick<StoreState, 'past' | 'future'> {
@@ -37,6 +37,7 @@ export const createHistorySlice: StateCreator<StoreState, [], [], HistorySlice> 
       nodes: previous.nodes,
       edges: previous.edges,
       groups: previous.groups,
+      drawings: previous.drawings,
       past: past.slice(0, -1),
       future: [...future, current],
       selection: null,
@@ -55,6 +56,7 @@ export const createHistorySlice: StateCreator<StoreState, [], [], HistorySlice> 
       nodes: next.nodes,
       edges: next.edges,
       groups: next.groups,
+      drawings: next.drawings,
       past: [...past, current],
       future: future.slice(0, -1),
       selection: null,

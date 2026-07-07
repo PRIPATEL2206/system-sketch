@@ -36,7 +36,13 @@ export function useKeyboardShortcuts({
       const key = e.key.toLowerCase();
 
       if (key === 'escape') {
-        useStore.getState().clearSelection();
+        // Exit drawing mode first; if already in select mode, clear selection.
+        const s = useStore.getState();
+        if (s.drawingMode !== 'none') {
+          s.setDrawingMode('none');
+        } else {
+          s.clearSelection();
+        }
         return;
       }
 
@@ -111,6 +117,42 @@ export function useKeyboardShortcuts({
           if (e.shiftKey) return;
           e.preventDefault();
           onQuickAdd();
+          return;
+        case 'p':
+          e.preventDefault();
+          useStore.getState().setDrawingMode(
+            useStore.getState().drawingMode === 'freehand' ? 'none' : 'freehand',
+          );
+          return;
+        case 'r':
+          e.preventDefault();
+          useStore.getState().setDrawingMode(
+            useStore.getState().drawingMode === 'rect' ? 'none' : 'rect',
+          );
+          return;
+        case 'o':
+          e.preventDefault();
+          useStore.getState().setDrawingMode(
+            useStore.getState().drawingMode === 'ellipse' ? 'none' : 'ellipse',
+          );
+          return;
+        case 'l':
+          e.preventDefault();
+          useStore.getState().setDrawingMode(
+            useStore.getState().drawingMode === 'line' ? 'none' : 'line',
+          );
+          return;
+        case '\\':
+          e.preventDefault();
+          useStore.getState().setDrawingMode(
+            useStore.getState().drawingMode === 'arrow' ? 'none' : 'arrow',
+          );
+          return;
+        case 'e':
+          e.preventDefault();
+          useStore.getState().setDrawingMode(
+            useStore.getState().drawingMode === 'eraser' ? 'none' : 'eraser',
+          );
           return;
         case 'f':
           e.preventDefault();

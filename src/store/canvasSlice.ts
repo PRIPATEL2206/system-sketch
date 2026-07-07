@@ -26,12 +26,13 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
     }));
   },
 
-  hydrate: ({ nodes, edges, groups, projectName }) => {
+  hydrate: ({ nodes, edges, groups, drawings, projectName }) => {
     flushCoalesce();
     set((s) => ({
       nodes,
       edges,
       groups: groups ?? [],
+      drawings: drawings ?? [],
       projectName: projectName ?? s.projectName,
       metadata: { ...s.metadata, name: projectName ?? s.metadata.name },
       selection: null,

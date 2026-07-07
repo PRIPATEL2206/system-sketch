@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { createCanvasSlice } from '@/store/canvasSlice';
 import { createClipboardSlice } from '@/store/clipboardSlice';
+import { createDrawingSlice } from '@/store/drawingSlice';
 import { createEdgeSlice } from '@/store/edgeSlice';
 import { createGroupSlice } from '@/store/groupSlice';
 import { createHistorySlice } from '@/store/historySlice';
@@ -16,6 +17,7 @@ export const useStore = create<StoreState>()((...args) => ({
   ...createEdgeSlice(...args),
   ...createSelectionSlice(...args),
   ...createGroupSlice(...args),
+  ...createDrawingSlice(...args),
   ...createHistorySlice(...args),
   ...createClipboardSlice(...args),
 }));

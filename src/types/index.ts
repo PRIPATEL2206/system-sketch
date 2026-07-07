@@ -108,7 +108,39 @@ export interface ProjectConfig {
   nodes: SystemNode[];
   edges: SystemEdge[];
   groups?: SystemNodeGroup[];
+  /** Freehand / shape drawings. Optional for backward compat with older configs. */
+  drawings?: DrawingElement[];
   metadata: ProjectMetadata;
 }
 
 export type Theme = 'light' | 'dark';
+
+/* -------------------------------------------------------------------- */
+/* Drawing layer types                                                  */
+/* -------------------------------------------------------------------- */
+
+export type DrawingTool =
+  | 'none'
+  | 'freehand'
+  | 'rect'
+  | 'ellipse'
+  | 'line'
+  | 'arrow'
+  | 'eraser';
+
+export type DrawingElementType = 'freehand' | 'rect' | 'ellipse' | 'line' | 'arrow';
+
+export interface DrawingElement {
+  id: string;
+  type: DrawingElementType;
+  /**
+   * For freehand: array of [x, y] control points (smoothed on render).
+   * For rect/ellipse: [[x1,y1], [x2,y2]] (top-left → bottom-right).
+   * For line/arrow: [[x1,y1], [x2,y2]] (start → end).
+   */
+  points: number[][];
+  stroke: string;
+  strokeWidth: number;
+  fill?: string;
+  opacity?: number;
+}

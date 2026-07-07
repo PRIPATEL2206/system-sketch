@@ -31,6 +31,7 @@ export function saveProjectAsJson(): string | null {
     nodes: s.nodes,
     edges: s.edges,
     groups: s.groups,
+    drawings: s.drawings,
   });
   const filename = `${slugify(s.projectName)}.json`;
   downloadJson(filename, config);
@@ -44,6 +45,7 @@ export async function importProjectFromFile(file: File): Promise<void> {
     nodes: config.nodes,
     edges: config.edges,
     groups: config.groups,
+    drawings: config.drawings,
     projectName: config.metadata.name,
   });
 }
