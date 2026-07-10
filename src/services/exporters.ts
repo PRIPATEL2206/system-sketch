@@ -92,12 +92,14 @@ function triggerDownload(href: string, filename: string): void {
 }
 
 function htmlToImageOptions(width: number, height: number, opts: CaptureOptions) {
-  const background = opts.background ?? '#ffffff';
+  // Default to transparent so exports look good on any background.
+  // Callers (like PDF) that need an opaque bg pass it explicitly.
+  const background = opts.background ?? 'transparent';
   return {
     width,
     height,
     pixelRatio: opts.pixelRatio ?? 2,
-    backgroundColor: background,
+    backgroundColor: background === 'transparent' ? undefined : background,
     cacheBust: true,
     // Skip elements we don't want in the export (controls/minimap/panel).
     filter: (node: HTMLElement) => {
@@ -153,6 +155,7 @@ export async function exportAsSvg(
 /**
  * PDF export = render to PNG, then place inside a single-page jsPDF
  * document sized to fit the image. Landscape/portrait is auto-chosen.
+ * PDF needs an opaque background — we detect the current theme.
  */
 export async function exportAsPdf(
   filename: string,
@@ -160,14 +163,15 @@ export async function exportAsPdf(
 ): Promise<void> {
   const viewport = findViewport();
   const frame = frameViewportToNodes(opts);
+  // PDF must have an opaque bg. Detect theme from the <html> class.
+  const isDark = document.documentElement.classList.contains('dark');
+  const pdfBg = opts.background ?? (isDark ? '#0a0a0f' : '#ffffff');
   try {
-    const dataUrl = await toPng(viewport, htmlToImageOptions(frame.width, frame.height, opts));
+    const dataUrl = await toPng(viewport, htmlToImageOptions(frame.width, frame.height, { ...opts, background: pdfBg }));
     const orientation = frame.width >= frame.height ? 'landscape' : 'portrait';
     const pdf = new jsPDF({
       orientation,
       unit: 'pt',
-      // jsPDF expects [width, height]; we feed it the captured frame size
-      // so the image fills the page edge-to-edge with no scaling artifacts.
       format: [frame.width, frame.height],
       compress: true,
     });
